@@ -195,16 +195,29 @@ def set_twoway():
     mode = "twoway"
 
 # Create buttons
-buttons = [
-    Button(10, 200, 120, 45, "Seek", set_seek),
-    Button(10, 250, 120, 45, "Flee", set_flee),
-    Button(10, 300, 120, 45, "Pursuit", set_pursuit),
-    Button(10, 350, 120, 45, "Evade", set_evade),
-    Button(10, 400, 120, 45, "Arrival", set_arrival),
-    Button(10, 450, 120, 45, "Circuit", set_circuit),
-    Button(10, 500, 120, 45, "Oneway", set_oneway),
-    Button(10, 550, 120, 45, "Twoway", set_twoway),
-]
+button_width, button_height = 120, 45
+button_spacing = 10
+buttons_per_row = 4  # Arrange buttons in two rows of 4 each
+
+first_row_y = HEIGHT - (button_height * 2) - 15  # First row 15px above the bottom
+second_row_y = HEIGHT - button_height - 10  # Second row 10px above the bottom
+
+buttons = []
+for i, (text, callback) in enumerate([
+    ("Seek", set_seek),
+    ("Flee", set_flee),
+    ("Pursuit", set_pursuit),
+    ("Evade", set_evade),
+    ("Arrival", set_arrival),
+    ("Circuit", set_circuit),
+    ("Oneway", set_oneway),
+    ("Twoway", set_twoway),
+]):
+    row = i // buttons_per_row  # 0 for first row, 1 for second row
+    col = i % buttons_per_row  # Column position
+    x = 10 + (button_width + button_spacing) * col  # X position per column
+    y = first_row_y if row == 0 else second_row_y  # Assign row Y position
+    buttons.append(Button(x, y, button_width, button_height, text, callback))
 
 # Enhanced background gradient
 def draw_custom_background(screen):
