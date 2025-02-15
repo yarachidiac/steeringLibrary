@@ -63,24 +63,33 @@ class Button:
 
 # Agent class (unchanged)
 class Agent:
-    def __init__(self, x, y, color):
+    def __init__(self, x, y, color, mass=1.0):
         self.position = pygame.Vector2(x, y)
         self.velocity = pygame.Vector2(0, 0)
+        self.acceleration = pygame.Vector2(0, 0)  # New: Stores applied forces
+        self.mass = mass  # New: Affects acceleration response
         self.max_speed = 2
+        self.max_force = 0.1  # New: Limits force applied per update
         self.color = color
         self.radius = 10
 
+    def apply_force(self, force):
+        """Applies force based on mass (F = ma)."""
+        self.acceleration += force / self.mass  # Newton's Second Law
+
     def seek(self, target):
         desired = pygame.Vector2(target) - self.position
-        desired = normalize(desired)
-        desired *= self.max_speed
-        self.velocity = desired
+        desired = normalize(desired) * self.max_speed
+        steering = desired - self.velocity  # Compute steering force
+        steering = normalize(steering) * min(self.max_force, steering.length())  # Limit force
+        self.apply_force(steering)
 
     def flee(self, target):
         desired = self.position - pygame.Vector2(target)
-        desired = normalize(desired)
-        desired *= self.max_speed
-        self.velocity = desired
+        desired = normalize(desired) * self.max_speed
+        steering = desired - self.velocity
+        steering = normalize(steering) * min(self.max_force, steering.length())  # Limit force
+        self.apply_force(steering)
 
     def pursuit(self, target, target_velocity):
         future_position = pygame.Vector2(target) + pygame.Vector2(target_velocity) * 20
@@ -98,16 +107,24 @@ class Agent:
             desired *= self.max_speed * (distance_to_target / 100)
         else:
             desired *= self.max_speed
-        self.velocity = desired
+        steering = desired - self.velocity
+        steering = normalize(steering) * min(self.max_force, steering.length())  # Limit force
+        self.apply_force(steering)
 
     def update(self):
-        self.position += self.velocity
+        """Updates position, velocity, and acceleration."""
+        self.velocity += self.acceleration  # Apply acceleration to velocity
+        self.velocity = normalize(self.velocity) * min(self.velocity.length(), self.max_speed)  # Limit speed
+        self.position += self.velocity  # Move agent
+        self.acceleration *= 0  # Reset acceleration each frame
+
+        # Ensure agent stays within bounds
         self.position.x = max(self.radius, min(WIDTH - self.radius, self.position.x))
         self.position.y = max(self.radius, min(HEIGHT - self.radius, self.position.y))
 
     def draw(self, screen):
         pygame.draw.circle(screen, self.color, (int(self.position.x), int(self.position.y)), self.radius)
-        # Add subtle glow effect
+        # Subtle glow effect
         for i in range(3, 0, -1):
             pygame.draw.circle(screen, (*self.color, 50), (int(self.position.x), int(self.position.y)), self.radius + i, 1)
 
